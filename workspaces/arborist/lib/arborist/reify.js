@@ -238,6 +238,18 @@ module.exports = cls => class Reifier extends cls {
     this.idealTree.meta.hiddenLockfile = true
     this.idealTree.meta.lockfileVersion = defaultLockfileVersion
 
+    // Preserve inertness for failed stuff.
+    if (this.actualTree) {
+      for (const [loc, actual] of this.actualTree.inventory.entries()) {
+        if (actual.ideallyInert) {
+          const ideal = this.idealTree.inventory.get(loc)
+          if (ideal) {
+            ideal.ideallyInert = true
+          }
+        }
+      }
+    }
+
     this.actualTree = this.idealTree
     this.idealTree = null
 

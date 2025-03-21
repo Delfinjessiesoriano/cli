@@ -144,7 +144,7 @@ const assertNoNewer = async (path, data, lockTime, dir, seen) => {
   let entries
   if (dir === path) {
     entries = [{ name: 'node_modules', isDirectory: () => true }]
-  } else {
+  } else if (!inert) {
     const { mtime: dirTime } = await stat(dir)
     if (dirTime > lockTime) {
       throw new Error(`out of date, updated: ${rel}`)
@@ -786,6 +786,10 @@ class Shrinkwrap {
         meta.version = spec.fetchSpec
       }
       // ok, I did my best!  good luck!
+    }
+
+    if (lock.ideallyInert) {
+      meta.ideallyInert = true
     }
 
     if (lock.bundled) {
