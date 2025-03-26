@@ -600,7 +600,9 @@ module.exports = cls => class Reifier extends cls {
     // retire the same path at the same time.
     const dirsChecked = new Set()
     return promiseAllRejectLate(leaves.map(async node => {
-      if (node.ideallyInert) { return }
+      if (node.ideallyInert) {
+        return
+      }
       for (const d of walkUp(node.path)) {
         if (d === node.top.path) {
           break
@@ -745,7 +747,9 @@ module.exports = cls => class Reifier extends cls {
   }
 
   async #extractOrLink (node) {
-    if (node.ideallyInert) { return }
+    if (node.ideallyInert) {
+      return
+    }
 
     const nm = resolve(node.parent.path, 'node_modules')
     await this.#validateNodeModules(nm)
@@ -1155,7 +1159,9 @@ module.exports = cls => class Reifier extends cls {
 
       this.#retiredUnchanged[retireFolder] = []
       return promiseAllRejectLate(diff.unchanged.map(node => {
-        if (node.ideallyInert) { return }
+        if (node.ideallyInert) {
+          return
+        }
         // no need to roll back links, since we'll just delete them anyway
         if (node.isLink) {
           return mkdir(dirname(node.path), { recursive: true, force: true })

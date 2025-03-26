@@ -100,7 +100,9 @@ module.exports = cls => class IsolatedReifier extends cls {
   }
 
   async externalProxy (result, node) {
-    if (node.ideallyInert) { return }
+    if (node.ideallyInert) {
+      return
+    }
     await this.assignCommonProperties(node, result)
     if (node.hasShrinkwrap) {
       const dir = join(
