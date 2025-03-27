@@ -3517,3 +3517,116 @@ t.test('workspace installs retain existing versions with newer package specs', a
   t.same(updatedPackageJson.dependencies, { abbrev: '1.0.4' },
     'another-cool-package package.json should be updated to abbrev@1.0.4')
 })
+
+t.test('externalProxy returns early for ideally inert node with installStrategy linked', async t => {
+  const path = t.testdir({
+    'package.json': JSON.stringify({
+      dependencies: {
+        abbrev: '1.1.1',
+      },
+    }),
+    'package-lock.json': JSON.stringify({
+      lockfileVersion: 2,
+      requires: true,
+      packages: {
+        '': {
+          devDependencies: {
+            abbrev: '1.1.1',
+          },
+        },
+        'node_modules/abbrev': {
+          version: '1.1.1',
+          resolved: 'https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz',
+          integrity: 'sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==',
+          dev: true,
+          ideallyInert: true,
+        },
+      },
+      dependencies: {
+        abbrev: {
+          version: '1.1.1',
+          resolved: 'https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz',
+          integrity: 'sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==',
+          dev: true,
+        },
+      },
+    }),
+  })
+
+  const arb = new Arborist({
+    path,
+    registry: 'https://registry.npmjs.org',
+    cache: resolve(path, 'cache'),
+    installStrategy: 'linked',
+  })
+  await arb.reify({ installStrategy: 'linked' })
+
+  // Since the node is ideally inert, it should not be installed in node_modules
+  t.throws(
+    () => fs.lstatSync(resolve(path, 'node_modules', 'abbrev')),
+    { code: 'ENOENT' },
+    'ideally inert node should not be installed'
+  )
+  t.end()
+})
+
+t.test('externalOptionalDependencies excludes ideally inert optional node with installStrategy linked', async t => {
+  const testDir = t.testdir({
+    'package.json': JSON.stringify({
+      optionalDependencies: {
+        abbrev: '1.1.1',
+      },
+    }),
+    'package-lock.json': JSON.stringify({
+      lockfileVersion: 2,
+      requires: true,
+      packages: {
+        '': {
+          optionalDependencies: {
+            abbrev: '1.1.1',
+          },
+        },
+        'node_modules/abbrev': {
+          version: '1.1.1',
+          resolved: 'https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz',
+          integrity: 'sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==',
+          dev: true,
+          ideallyInert: true,
+        },
+      },
+      optionalDependencies: {
+        abbrev: {
+          version: '1.1.1',
+          resolved: 'https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz',
+          integrity: 'sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==',
+          dev: true,
+          ideallyInert: true,
+        },
+      },
+    }),
+  })
+
+  const arb = new Arborist({
+    path: testDir,
+    registry: 'https://registry.npmjs.org',
+    cache: resolve(testDir, 'cache'),
+    installStrategy: 'linked',
+  })
+  await arb.reify({ installStrategy: 'linked' })
+
+  // Assert that the optional inert node does not appear in externalOptionalDependencies
+  t.notOk(
+    arb.idealGraph.externalOptionalDependencies &&
+    arb.idealGraph.externalOptionalDependencies.some(n => n && n.name === 'abbrev'),
+    'ideally inert optional dependency should not appear in externalOptionalDependencies'
+  )
+
+  // And verify that it is not installed on disk
+  t.throws(
+    () => fs.lstatSync(resolve(testDir, 'node_modules', 'abbrev')),
+    { code: 'ENOENT' },
+    'ideally inert optional node should not be installed'
+  )
+
+  t.end()
+})
