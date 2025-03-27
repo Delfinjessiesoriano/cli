@@ -3630,3 +3630,45 @@ t.test('externalOptionalDependencies excludes ideally inert optional node with i
 
   t.end()
 })
+
+t.test('ideally inert due to platform mismatch using optional dependency', async t => {
+  const testDir = t.testdir({
+    'package.json': JSON.stringify({
+      name: 'platform-test',
+      version: '1.0.0',
+      optionalDependencies: {
+        'platform-specifying-test-package': 'file:platform-specifying-test-package',
+      },
+    }, null, 2),
+    'platform-specifying-test-package': {
+      'package.json': JSON.stringify({
+        name: 'platform-specifying-test-package',
+        version: '1.0.0',
+        // Declare an OS that doesn't match current platform
+        os: ['win32'],
+      }, null, 2),
+    },
+  })
+
+  const arb = new Arborist({
+    audit: false,
+    path: testDir,
+    os: 'darwin',
+  })
+
+  // The platform check will fail for the optional dependency, and the optional failure handler should mark the node as ideally inert.
+  const tree = await arb.reify()
+  await arb.reify()
+
+  // In the ideal tree, the dependency should be present and marked as ideally inert.
+  const dep = tree.children.get('platform-specifying-test-package')
+  t.ok(dep, 'platform-specifying-test-package node exists in the ideal tree')
+  t.ok(dep.ideallyInert, 'node is marked as ideally inert due to platform mismatch')
+
+  // Verify that the dependency is not installed on disk.
+  t.throws(
+    () => fs.statSync(join(testDir, 'node_modules', 'platform-specifying-test-package')),
+    { code: 'ENOENT' },
+    'platform-specifying-test-package is not installed on disk'
+  )
+})

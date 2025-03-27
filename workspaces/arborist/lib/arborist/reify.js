@@ -240,9 +240,9 @@ module.exports = cls => class Reifier extends cls {
 
     // Preserve inertness for failed stuff.
     if (this.actualTree) {
-      for (const [loc, actual] of this.actualTree.inventory.entries()) {
+      for (const actual of this.actualTree.inventory.values()) {
         if (actual.ideallyInert) {
-          const ideal = this.idealTree.inventory.get(loc)
+          const ideal = this.idealTree.inventory.get(actual.name)
           if (ideal) {
             ideal.ideallyInert = true
           }
