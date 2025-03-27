@@ -596,6 +596,15 @@ t.test('update a child of a node with bundled deps', async t => {
   }))
 })
 
+t.test('update a node without updating an inert child bundle deps', async t => {
+  const path = fixture(t, 'testing-bundledeps-4')
+  createRegistry(t, true)
+  await t.resolveMatchSnapshot(printReified(path, {
+    update: ['@isaacs/testing-bundledeps-parent'],
+    save: false,
+  }))
+})
+
 t.test('update a node without updating a child that has bundle deps', async t => {
   const path = fixture(t, 'testing-bundledeps-3')
   createRegistry(t, true)
