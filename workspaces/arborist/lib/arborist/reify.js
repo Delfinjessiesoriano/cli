@@ -243,6 +243,7 @@ module.exports = cls => class Reifier extends cls {
       for (const actual of this.actualTree.inventory.values()) {
         if (actual.ideallyInert) {
           const ideal = this.idealTree.inventory.get(actual.name)
+          /* istanbul ignore else */
           if (ideal) {
             ideal.ideallyInert = true
           }
