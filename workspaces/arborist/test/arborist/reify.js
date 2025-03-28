@@ -3654,7 +3654,7 @@ t.test('ideally inert due to platform mismatch using optional dependency', async
         name: 'platform-specifying-test-package',
         version: '1.0.0',
         // Declare an OS that doesn't match current platform
-        os: ['win32'],
+        os: ['woo'],
       }, null, 2),
     },
   })
@@ -3662,7 +3662,7 @@ t.test('ideally inert due to platform mismatch using optional dependency', async
   const arb = new Arborist({
     audit: false,
     path: testDir,
-    os: 'darwin',
+    os: process.platform,
   })
 
   // The platform check will fail for the optional dependency, and the optional failure handler should mark the node as ideally inert.
